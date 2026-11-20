@@ -1,0 +1,906 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TripMate | Demo Trip Planner</title>
+
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 24px;
+            font-family: Arial, sans-serif;
+            background: #f1f5f9;
+            color: #1e293b;
+        }
+
+        .container { max-width: 950px; margin: auto; }
+
+        header {
+            background: #173f8a;
+            color: white;
+            padding: 25px;
+            border-radius: 14px;
+            margin-bottom: 20px;
+        }
+
+        header h1 { margin: 0 0 8px; }
+        header p { margin: 0; line-height: 1.6; }
+
+        .notice {
+            margin-top: 15px;
+            padding: 10px;
+            background: #fff7d6;
+            color: #765300;
+            border-radius: 8px;
+        }
+
+        .card {
+            background: white;
+            padding: 22px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px #0000000d;
+        }
+
+        label {
+            display: block;
+            margin: 14px 0 6px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+            font-size: 15px;
+        }
+
+        button {
+            width: 100%;
+            padding: 13px;
+            margin-top: 14px;
+            background: #2457d6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover { background: #173f8a; }
+        button:disabled { opacity: 0.6; cursor: wait; }
+
+        .secondary-btn { background: #15803d; }
+        .secondary-btn:hover { background: #166534; }
+
+        .small-btn {
+            width: auto;
+            padding: 9px 13px;
+            margin: 8px 8px 0 0;
+            font-size: 14px;
+        }
+
+        #status, #saved-status {
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            line-height: 1.5;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+        }
+
+        .summary-item {
+            background: #eff6ff;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .summary-item strong {
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .day-card { border-left: 5px solid #2457d6; }
+        .day-card p { line-height: 1.6; }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 18px;
+            color: #2457d6;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .hidden { display: none; }
+
+        .saved-item {
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 12px 0;
+            overflow-wrap: anywhere;
+        }
+
+        .saved-item h3 { margin-top: 0; }
+        .muted { color: #64748b; }
+
+        footer {
+            text-align: center;
+            padding: 15px;
+            color: #64748b;
+        }
+
+        @media (max-width: 600px) {
+            body { padding: 12px; }
+            .card { padding: 16px; }
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+
+    <a class="back-link" href="/">← Back to TripMate Dashboard</a>
+
+    <header>
+        <h1>✈ TripMate</h1>
+        <h2>Demo Trip Planner</h2>
+        <p>Plan your next adventure with a day-wise sample itinerary.</p>
+        <div class="notice">
+            DEMO MODE: This is a sample plan, not a real AI-generated itinerary.
+        </div>
+    </header>
+
+    <section class="card">
+        <h2>Plan Your Trip</h2>
+
+        <form id="planner-form">
+            <label for="destination">Destination</label>
+            <input type="text" id="destination" value="Goa"
+                   placeholder="e.g. Goa, Jaipur, Manali" required>
+
+            <label for="startDate">Start Date</label>
+            <input type="date" id="startDate" value="2026-11-15" required>
+
+            <label for="endDate">End Date</label>
+            <input type="date" id="endDate" value="2026-11-20" required>
+
+            <label for="budget">Total Budget (₹)</label>
+            <input type="number" id="budget" value="30000"
+                   min="1" step="0.01" required>
+
+            <button type="submit" id="generate-btn">
+                Generate Demo Itinerary
+            </button>
+
+            <p id="status" role="status" aria-live="polite"></p>
+        </form>
+    </section>
+
+    <section id="results" class="hidden">
+        <div class="card">
+            <h2 id="trip-title">Your Trip Plan</h2>
+            <p id="trip-summary"></p>
+
+            <h3>Estimated Budget Breakdown</h3>
+            <div id="budget-list" class="summary-grid"></div>
+
+            <button type="button" id="save-btn" class="secondary-btn">
+                Save Itinerary
+            </button>
+            <button type="button" id="update-btn" class="hidden">
+    Update Itinerary
+</button>
+            <p id="save-status" role="status" aria-live="polite"></p>
+        </div>
+
+        <h2>Day-by-Day Itinerary</h2>
+        <div id="days"></div>
+    </section>
+
+    <section class="card">
+        <h2>My Saved Itineraries</h2>
+        <p class="muted">Your saved travel plans, stored in the database.</p>
+
+        <button type="button" id="refresh-saved-btn">
+            Refresh Saved Itineraries
+        </button>
+
+        <p id="saved-status" role="status" aria-live="polite"></p>
+        <div id="saved-list"></div>
+    </section>
+
+    <footer>
+        TripMate Demo Planner | Sample estimates only
+    </footer>
+
+</div>
+
+<script>
+    const form = document.getElementById("planner-form");
+    const statusMessage = document.getElementById("status");
+    const results = document.getElementById("results");
+    const generateButton = document.getElementById("generate-btn");
+    const saveButton = document.getElementById("save-btn");
+    const updateButton = document.getElementById("update-btn");
+    const saveStatus = document.getElementById("save-status");
+    const savedStatus = document.getElementById("saved-status");
+    const savedList = document.getElementById("saved-list");
+    const refreshSavedButton = document.getElementById("refresh-saved-btn");
+
+    // Is variable mein latest generated itinerary rahegi.
+    let currentItinerary = null;
+    let alreadySaved = false;
+    let currentSavedItineraryId = null;
+
+    function formatDate(date) {
+        return date || "Date unavailable";
+    }
+
+    function formatMoney(amount) {
+        return Number(amount).toLocaleString("en-IN", {
+            maximumFractionDigits: 2
+        });
+    }
+
+    form.addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        const destination =
+            document.getElementById("destination").value.trim();
+        const startDate = document.getElementById("startDate").value;
+        const endDate = document.getElementById("endDate").value;
+        const budget = Number(document.getElementById("budget").value);
+
+        if (!destination) {
+            statusMessage.textContent = "Please enter a destination.";
+            return;
+        }
+
+        if (!startDate || !endDate || endDate < startDate) {
+            statusMessage.textContent =
+                "End date must be on or after the start date.";
+            return;
+        }
+
+        if (!Number.isFinite(budget) || budget <= 0) {
+            statusMessage.textContent =
+                "Please enter a valid budget greater than zero.";
+            return;
+        }
+
+        const requestBody = {
+            destination: destination,
+            startDate: startDate,
+            endDate: endDate,
+            budget: budget
+        };
+
+        generateButton.disabled = true;
+        statusMessage.textContent = "Generating your demo itinerary...";
+        saveStatus.textContent = "";
+        results.classList.add("hidden");
+        currentItinerary = null;
+        alreadySaved = false;
+        currentSavedItineraryId = null;
+        updateButton.classList.add("hidden");
+        saveButton.disabled = false;
+        saveButton.textContent = "Save Itinerary";
+
+        try {
+            const response = await fetch("/api/demo-itinerary/generate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "same-origin",
+                body: JSON.stringify(requestBody)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || "Unable to generate itinerary.");
+            }
+
+            // Exact generated data save karne ke liye rakhein.
+            currentItinerary = {
+                destination: data.destination,
+                startDate: data.startDate,
+                endDate: data.endDate,
+                budget: data.budget,
+                itinerary: data.itinerary
+            };
+
+            document.getElementById("trip-title").textContent =
+                data.destination + " Trip Plan";
+
+            document.getElementById("trip-summary").textContent =
+                data.startDate + " to " + data.endDate
+                + " | " + data.totalDays + " days"
+                + " | Budget: ₹" + formatMoney(data.budget);
+
+            const budgetList = document.getElementById("budget-list");
+            budgetList.replaceChildren();
+
+            Object.entries(data.budgetBreakdown || {}).forEach(
+                function ([category, amount]) {
+                    const item = document.createElement("div");
+                    item.className = "summary-item";
+
+                    const label = document.createElement("strong");
+                    label.textContent =
+                        category.charAt(0).toUpperCase() + category.slice(1);
+
+                    const value = document.createElement("span");
+                    value.textContent = "₹" + formatMoney(amount);
+
+                    item.append(label, value);
+                    budgetList.appendChild(item);
+                }
+            );
+
+            const daysContainer = document.getElementById("days");
+            daysContainer.replaceChildren();
+
+            (data.itinerary || []).forEach(function (day) {
+                const card = document.createElement("div");
+                card.className = "card day-card";
+
+                const heading = document.createElement("h3");
+                heading.textContent = "Day " + day.day + " — " + day.date;
+                card.appendChild(heading);
+
+                [
+                    ["🌅 Morning", day.morning],
+                    ["☀️ Afternoon", day.afternoon],
+                    ["🌆 Evening", day.evening]
+                ].forEach(function ([label, activity]) {
+                    const paragraph = document.createElement("p");
+                    const strong = document.createElement("strong");
+
+                    strong.textContent = label + ": ";
+                    paragraph.appendChild(strong);
+                    paragraph.appendChild(
+                        document.createTextNode(activity || "Free time")
+                    );
+                    card.appendChild(paragraph);
+                });
+
+                daysContainer.appendChild(card);
+            });
+
+            results.classList.remove("hidden");
+            statusMessage.textContent =
+                "Success! Your demo itinerary is ready. You can now save it.";
+
+        } catch (error) {
+            statusMessage.textContent =
+                "Error: " + error.message
+                + "\nPlease check that the Spring Boot server is running.";
+        } finally {
+            generateButton.disabled = false;
+        }
+    });
+
+    // Generated itinerary ko backend aur MySQL mein save karein.
+    saveButton.addEventListener("click", async function () {
+        if (!currentItinerary) {
+            saveStatus.textContent =
+                "Please generate an itinerary before saving.";
+            return;
+        }
+
+        if (alreadySaved) {
+            saveStatus.textContent = "This itinerary has already been saved.";
+            return;
+        }
+
+        saveButton.disabled = true;
+        saveStatus.textContent = "Saving itinerary...";
+
+        try {
+            const response = await fetch("/api/saved-itineraries", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "same-origin",
+                body: JSON.stringify(currentItinerary)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                if (response.status === 401 || response.status === 403) {
+                    throw new Error(
+                        "Please log in to TripMate before saving itineraries."
+                    );
+                }
+                throw new Error(data.message || data.error ||
+                    "Unable to save itinerary.");
+            }
+
+            alreadySaved = true;
+            currentSavedItineraryId = Number(data.id);
+            saveStatus.textContent =
+                "Saved successfully! Itinerary ID: " + data.id;
+            saveButton.textContent = "Itinerary Saved";
+
+            await loadSavedItineraries();
+
+        } catch (error) {
+            saveStatus.textContent = "Error: " + error.message;
+            saveButton.disabled = false;
+        }
+    });
+
+    // Current logged-in user ki saved itineraries load karein.
+    async function loadSavedItineraries() {
+        refreshSavedButton.disabled = true;
+        savedStatus.textContent = "Loading saved itineraries...";
+        savedList.replaceChildren();
+
+        try {
+            const response = await fetch("/api/saved-itineraries", {
+                method: "GET",
+                credentials: "same-origin"
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                if (response.status === 401 || response.status === 403) {
+                    throw new Error(
+                        "Please log in to view your saved itineraries."
+                    );
+                }
+                throw new Error(data.message || data.error ||
+                    "Unable to load saved itineraries.");
+            }
+
+            if (!Array.isArray(data) || data.length === 0) {
+                savedStatus.textContent = "No saved itineraries yet.";
+                return;
+            }
+
+            data.forEach(function (trip) {
+                const item = document.createElement("div");
+                item.className = "saved-item";
+
+                const heading = document.createElement("h3");
+                heading.textContent = "✈ " + trip.destination;
+
+                const dates = document.createElement("p");
+                dates.textContent = "Dates: " + formatDate(trip.startDate)
+                    + " to " + formatDate(trip.endDate);
+
+                const budget = document.createElement("p");
+                budget.textContent = "Budget: ₹" + formatMoney(trip.budget);
+
+                const created = document.createElement("p");
+                created.className = "muted";
+                created.textContent = "Saved on: "
+                    + (trip.createdAt || "Date unavailable");
+
+                const viewButton = document.createElement("button");
+                viewButton.type = "button";
+                viewButton.className = "small-btn";
+                viewButton.textContent = "View Itinerary";
+                viewButton.addEventListener("click", function () {
+                    viewSavedItinerary(trip.id);
+                });
+                const editButton = document.createElement("button");
+editButton.type = "button";
+editButton.className = "small-btn";
+editButton.textContent = "Edit";
+
+editButton.addEventListener("click", function () {
+    editSavedItinerary(trip.id);
+});
+                const deleteButton = document.createElement("button");
+deleteButton.type = "button";
+deleteButton.className = "small-btn delete-btn";
+deleteButton.textContent = "Delete";
+
+deleteButton.addEventListener("click", function () {
+    deleteSavedItinerary(trip.id, trip.destination);
+});
+item.append(
+    heading,
+    dates,
+    budget,
+    created,
+    viewButton,
+    editButton,
+    deleteButton
+);
+                savedList.appendChild(item);
+            });
+
+            savedStatus.textContent =
+                "Loaded " + data.length + " saved itinerary/itineraries.";
+
+        } catch (error) {
+            savedStatus.textContent = "Error: " + error.message;
+        } finally {
+            refreshSavedButton.disabled = false;
+        }
+    }
+
+    // Saved itinerary ka complete detail API se read karein.
+    // Saved itinerary ko database se delete karein.
+async function deleteSavedItinerary(id, destination) {
+
+    const confirmed = window.confirm(
+        "Are you sure you want to delete the itinerary for "
+        + destination + "?"
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    savedStatus.textContent = "Deleting itinerary...";
+
+    try {
+        const response = await fetch(
+            "/api/saved-itineraries/" + encodeURIComponent(id),
+            {
+                method: "DELETE",
+                credentials: "same-origin"
+            }
+        );
+
+        const responseText = await response.text();
+
+        if (!response.ok) {
+            if (response.status === 401 || response.status === 403) {
+                throw new Error(
+                    "Please log in to delete this itinerary."
+                );
+            }
+
+            throw new Error(
+                responseText || "Unable to delete itinerary."
+            );
+        }
+
+        // Agar currently open itinerary delete hui hai,
+        // to Save button ko reset karein.
+        if (Number(currentSavedItineraryId) === Number(id)) {
+            currentSavedItineraryId = null;
+            currentItinerary = null;
+            alreadySaved = false;
+
+            saveButton.disabled = false;
+            saveButton.textContent = "Save Itinerary";
+
+            results.classList.add("hidden");
+            saveStatus.textContent = "";
+        }
+
+        savedStatus.textContent =
+            "Itinerary deleted successfully!";
+
+        // Saved itineraries ki list dobara load karein.
+        await loadSavedItineraries();
+
+    } catch (error) {
+        savedStatus.textContent =
+            "Error: " + error.message;
+    }
+}
+
+async function editSavedItinerary(id) {
+    savedStatus.textContent = "Loading itinerary for editing...";
+
+    try {
+        const response = await fetch(
+            "/api/saved-itineraries/" + encodeURIComponent(id),
+            {
+                method: "GET",
+                credentials: "same-origin"
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                data.error || data.message || "Unable to load itinerary."
+            );
+        }
+
+        // Saved details form mein fill karein.
+        document.getElementById("destination").value =
+            data.destination || "";
+
+        document.getElementById("startDate").value =
+            data.startDate || "";
+
+        document.getElementById("endDate").value =
+            data.endDate || "";
+
+        document.getElementById("budget").value =
+            data.budget || "";
+
+        // Current itinerary ID aur data store karein.
+        currentSavedItineraryId = Number(id);
+
+        let days = data.itineraryJson ?? data.itinerary;
+
+        if (typeof days === "string") {
+            days = JSON.parse(days);
+        }
+
+        if (!Array.isArray(days) && days && Array.isArray(days.itinerary)) {
+            days = days.itinerary;
+        }
+
+        if (!Array.isArray(days)) {
+            throw new Error("Itinerary data format is invalid.");
+        }
+
+        currentItinerary = {
+            destination: data.destination,
+            startDate: data.startDate,
+            endDate: data.endDate,
+            budget: data.budget,
+            itinerary: days
+        };
+
+        alreadySaved = true;
+
+        saveButton.disabled = true;
+        saveButton.textContent = "Already Saved";
+        saveButton.classList.add("hidden");
+updateButton.classList.remove("hidden");
+
+        results.classList.remove("hidden");
+
+        saveStatus.textContent =
+            "Edit the details above, then click Update Itinerary.";
+
+        // Update button show karein.
+        document.getElementById("update-btn").classList.remove("hidden");
+
+        savedStatus.textContent =
+            "Itinerary loaded. You can now edit its details.";
+
+        window.scrollTo({ top: 0, behavior: "smooth" });
+
+    } catch (error) {
+        savedStatus.textContent = "Error: " + error.message;
+    }
+}
+
+updateButton.addEventListener("click", async function () {
+
+    if (!currentItinerary || !currentSavedItineraryId) {
+        saveStatus.textContent = "Please select an itinerary to edit.";
+        return;
+    }
+
+    const destination =
+        document.getElementById("destination").value.trim();
+
+    const startDate =
+        document.getElementById("startDate").value;
+
+    const endDate =
+        document.getElementById("endDate").value;
+
+    const budget =
+        Number(document.getElementById("budget").value);
+
+    if (!destination || !startDate || !endDate ||
+        endDate < startDate || !Number.isFinite(budget) || budget <= 0) {
+
+        saveStatus.textContent = "Please enter valid trip details.";
+        return;
+    }
+
+    const updatedItinerary = {
+        destination: destination,
+        startDate: startDate,
+        endDate: endDate,
+        budget: budget,
+        itinerary: currentItinerary.itinerary
+    };
+
+    updateButton.disabled = true;
+    saveStatus.textContent = "Updating itinerary...";
+
+    try {
+        const response = await fetch(
+            "/api/saved-itineraries/" + encodeURIComponent(currentSavedItineraryId),
+            {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                credentials: "same-origin",
+                body: JSON.stringify(updatedItinerary)
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                data.error || data.message || "Unable to update itinerary."
+            );
+        }
+
+        currentItinerary = updatedItinerary;
+        alreadySaved = true;
+
+        saveStatus.textContent =
+            "Itinerary updated successfully!";
+            saveButton.classList.remove("hidden");
+saveButton.disabled = true;
+saveButton.textContent = "Already Saved";
+
+updateButton.classList.add("hidden");
+
+        await loadSavedItineraries();
+
+    } catch (error) {
+        saveStatus.textContent = "Error: " + error.message;
+
+    } finally {
+        updateButton.disabled = false;
+    }
+});
+
+    async function viewSavedItinerary(id) {
+        savedStatus.textContent = "Loading itinerary details...";
+
+        try {
+            const response = await fetch(
+                "/api/saved-itineraries/" + encodeURIComponent(id),
+                {
+                    method: "GET",
+                    credentials: "same-origin"
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                if (response.status === 401 || response.status === 403) {
+                    throw new Error("Please log in to view this itinerary.");
+                }
+                throw new Error(data.message || data.error ||
+                    "Unable to open saved itinerary.");
+            }
+
+            // Backend itineraryJson field mein JSON array string save karta hai.
+            // Kuch responses mein field ka naam itinerary bhi ho sakta hai.
+            let days = data.itineraryJson ?? data.itinerary;
+
+            if (typeof days === "string") {
+                days = JSON.parse(days);
+            }
+
+            // Agar kabhi JSON object ke andar itinerary array aaye, use bhi support karein.
+            if (!Array.isArray(days) && days && Array.isArray(days.itinerary)) {
+                days = days.itinerary;
+            }
+
+            if (!Array.isArray(days)) {
+                throw new Error(
+                    "Saved record mila, lekin itinerary data ka format sahi nahi hai."
+                );
+            }
+
+            currentItinerary = {
+                destination: data.destination,
+                startDate: data.startDate,
+                endDate: data.endDate,
+                budget: data.budget,
+                itinerary: days
+            };
+            currentSavedItineraryId = Number(id);
+
+            document.getElementById("destination").value = data.destination || "";
+            document.getElementById("startDate").value = data.startDate || "";
+            document.getElementById("endDate").value = data.endDate || "";
+            document.getElementById("budget").value = data.budget || "";
+
+            document.getElementById("trip-title").textContent =
+                (data.destination || "Your") + " Trip Plan";
+
+            document.getElementById("trip-summary").textContent =
+                formatDate(data.startDate) + " to " + formatDate(data.endDate)
+                + " | " + days.length + " days"
+                + " | Budget: ₹" + formatMoney(data.budget);
+
+            // Saved record mein budgetBreakdown nahi hota, isliye fallback calculate karein.
+            const totalBudget = Number(data.budget) || 0;
+            const budgetBreakdown = data.budgetBreakdown || {
+                stay: totalBudget * 0.40,
+                food: totalBudget * 0.25,
+                transport: totalBudget * 0.20,
+                activities: totalBudget * 0.15
+            };
+
+            const budgetList = document.getElementById("budget-list");
+            budgetList.replaceChildren();
+
+            Object.entries(budgetBreakdown).forEach(
+                function ([category, amount]) {
+                    const item = document.createElement("div");
+                    item.className = "summary-item";
+
+                    const label = document.createElement("strong");
+                    label.textContent =
+                        category.charAt(0).toUpperCase() + category.slice(1);
+
+                    const value = document.createElement("span");
+                    value.textContent = "₹" + formatMoney(amount);
+
+                    item.append(label, value);
+                    budgetList.appendChild(item);
+                }
+            );
+
+            const daysContainer = document.getElementById("days");
+            daysContainer.replaceChildren();
+
+            days.forEach(function (day, index) {
+                const card = document.createElement("div");
+                card.className = "card day-card";
+
+                const heading = document.createElement("h3");
+                heading.textContent =
+                    "Day " + (day.day || index + 1) + " — " +
+                    formatDate(day.date);
+                card.appendChild(heading);
+
+                [
+                    ["🌅 Morning", day.morning],
+                    ["☀️ Afternoon", day.afternoon],
+                    ["🌆 Evening", day.evening]
+                ].forEach(function ([label, activity]) {
+                    const paragraph = document.createElement("p");
+                    const strong = document.createElement("strong");
+                    strong.textContent = label + ": ";
+                    paragraph.appendChild(strong);
+                    paragraph.appendChild(
+                        document.createTextNode(activity || "Free time")
+                    );
+                    card.appendChild(paragraph);
+                });
+
+                daysContainer.appendChild(card);
+            });
+
+            alreadySaved = true;
+            saveButton.disabled = true;
+            saveButton.textContent = "Already Saved";
+            saveStatus.textContent = "You are viewing a saved itinerary.";
+            results.classList.remove("hidden");
+            statusMessage.textContent = "Saved itinerary loaded successfully.";
+            savedStatus.textContent = "Saved itinerary opened successfully.";
+
+            window.scrollTo({ top: 0, behavior: "smooth" });
+
+        } catch (error) {
+            savedStatus.textContent = "Error: " + error.message;
+        }
+    }
+
+    refreshSavedButton.addEventListener("click", loadSavedItineraries);
+
+    // Page khulte hi saved itineraries load karne ki koshish karein.
+    loadSavedItineraries();
+</script>
+</body>
+</html>

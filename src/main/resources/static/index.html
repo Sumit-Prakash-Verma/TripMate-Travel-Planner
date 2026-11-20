@@ -1,0 +1,607 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="TripMate - Plan trips, manage budgets and create personalized travel itineraries.">
+
+    <title>TripMate | Smart Travel Planner</title>
+
+    <link rel="stylesheet" href="/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="/script.js" defer></script>
+</head>
+
+<body>
+
+<header class="navbar">
+    <a class="brand" href="/">✈ TripMate</a>
+    <span class="nav-label">Your Travel Dashboard</span>
+</header>
+
+<main class="container">
+
+    <!-- AUTHENTICATION SECTION -->
+    <section class="panel form-panel" id="auth-panel">
+
+        <h2>Welcome to TripMate</h2>
+
+        <p class="muted">
+            Log in or create an account to manage your trips.
+        </p>
+
+        <div id="auth-status"
+             class="status"
+             role="status"
+             aria-live="polite"
+             hidden>
+        </div>
+
+        <div id="auth-forms" class="content-grid">
+
+            <!-- LOGIN -->
+            <section>
+                <h3>Login</h3>
+
+                <form id="login-form">
+
+                    <label for="login-email">Email address</label>
+
+                    <input
+                        id="login-email"
+                        name="email"
+                        type="email"
+                        maxlength="150"
+                        placeholder="Enter your email"
+                        autocomplete="email"
+                        required
+                    >
+
+                    <label for="login-password">Password</label>
+
+                    <input
+                        id="login-password"
+                        name="password"
+                        type="password"
+                        placeholder="Enter your password"
+                        autocomplete="current-password"
+                        required
+                    >
+
+                    <button type="submit"
+                            id="login-button"
+                            class="primary-btn">
+                        Login
+                    </button>
+
+                </form>
+            </section>
+
+            <!-- REGISTER -->
+            <section>
+                <h3>Create an Account</h3>
+
+                <form id="register-form">
+
+                    <label for="register-full-name">Full name</label>
+
+                    <input
+                        id="register-full-name"
+                        name="fullName"
+                        type="text"
+                        maxlength="100"
+                        placeholder="Enter your full name"
+                        autocomplete="name"
+                        required
+                    >
+
+                    <label for="register-email">Email address</label>
+
+                    <input
+                        id="register-email"
+                        name="email"
+                        type="email"
+                        maxlength="150"
+                        placeholder="Enter your email"
+                        autocomplete="email"
+                        required
+                    >
+
+                    <label for="register-password">Password</label>
+
+                    <input
+                        id="register-password"
+                        name="password"
+                        type="password"
+                        minlength="8"
+                        maxlength="72"
+                        placeholder="At least 8 characters"
+                        autocomplete="new-password"
+                        required
+                    >
+
+                    <button type="submit"
+                            id="register-button"
+                            class="primary-btn">
+                        Register
+                    </button>
+
+                </form>
+            </section>
+
+        </div>
+
+        <!-- LOGGED IN USER -->
+        <div id="user-panel" hidden>
+
+            <p>
+                You are logged in as
+                <strong id="current-username"></strong>.
+            </p>
+
+            <button type="button"
+                    id="logout-button"
+                    class="secondary-btn">
+                Logout
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- HERO SECTION -->
+    <section class="hero">
+
+        <div>
+
+            <p class="eyebrow">
+                YOUR NEXT ADVENTURE STARTS HERE
+            </p>
+
+            <h1>
+                Plan your next <span>adventure.</span>
+            </h1>
+
+            <p class="hero-text">
+                Organize your trips, manage your budget,
+                and keep every travel plan in one place.
+            </p>
+
+        </div>
+
+        <div class="hero-icon">🌍</div>
+
+    </section>
+
+
+    <!-- TRIPMATE DEMO PLANNER -->
+    <section class="panel form-panel" id="ai-planner-panel">
+
+        <div class="ai-planner-header">
+
+            <div>
+                <p class="eyebrow">
+    POWERED BY LOCAL AI • OLLAMA + Qwen 2.5:7b
+</p>
+
+                <h2>🗺️ Smart Trip Planner</h2>
+
+                <p class="muted">
+                    Create a personalized destination-based itinerary
+                    with daily sightseeing activities and estimated costs.
+                </p>
+            </div>
+
+            <span class="demo-badge">
+    AI POWERED
+</span>
+
+        </div>
+
+
+        <!-- PLANNER STATUS -->
+        <div id="ai-status"
+             class="status"
+             role="status"
+             aria-live="polite"
+             hidden>
+        </div>
+
+
+        <!-- PLANNER FORM -->
+        <form id="ai-plan-form">
+
+            <label for="ai-destination">
+                Travel destination *
+            </label>
+
+            <input
+                id="ai-destination"
+                name="destination"
+                type="text"
+                maxlength="150"
+                placeholder="e.g. Manali, Goa, Jaipur"
+                required
+            >
+
+            <div class="field-row">
+
+                <div>
+                    <label for="ai-start-date">
+                        Start date *
+                    </label>
+
+                    <input
+                        id="ai-start-date"
+                        name="startDate"
+                        type="date"
+                        required
+                    >
+                </div>
+
+                <div>
+                    <label for="ai-end-date">
+                        End date *
+                    </label>
+
+                    <input
+                        id="ai-end-date"
+                        name="endDate"
+                        type="date"
+                        required
+                    >
+                </div>
+
+            </div>
+
+
+            <label for="ai-budget">
+                Total trip budget (₹) *
+            </label>
+
+            <input
+                id="ai-budget"
+                name="budget"
+                type="number"
+                min="1"
+                step="1"
+                placeholder="e.g. 32000"
+                required
+            >
+
+
+            <button
+                type="submit"
+                id="ai-generate-button"
+                class="primary-btn">
+                ✨ Generate Trip Plan
+            </button>
+
+        </form>
+
+
+        <!-- ITINERARY RESULT -->
+        <section class="ai-result-section">
+
+            <div class="ai-result-heading">
+
+                <div>
+                    <p class="eyebrow">YOUR TRAVEL EXPERIENCE</p>
+
+                    <h3>🧳 Your Trip Itinerary</h3>
+
+                </div>
+
+                <span class="demo-badge">
+    AI GENERATED
+</span>
+
+            </div>
+
+
+            <div class="ai-result-card">
+
+                <div
+                    id="ai-itinerary"
+                    class="ai-itinerary-output"
+                    aria-live="polite"
+                >Your personalized travel itinerary will appear here after you generate your trip plan.</div>
+
+            </div>
+            <button
+    type="button"
+    id="save-itinerary-button"
+    class="save-itinerary-btn"
+    hidden
+>
+    💾 Save Itinerary to My Trips
+</button>
+
+        </section>
+
+        <p class="demo-link">
+            Want to try the sample planner?
+
+            <a href="/demo-itinerary.html">
+                Open Sample Planner →
+            </a>
+        </p>
+
+    </section>
+
+
+    <!-- TRIP STATISTICS -->
+    <section class="stats">
+
+        <article class="stat-card">
+
+            <span>Total Trips</span>
+
+            <strong id="trip-count">0</strong>
+
+        </article>
+
+
+        <article class="stat-card">
+
+            <span>Total Planned Budget</span>
+
+            <strong id="total-budget">₹0</strong>
+
+        </article>
+
+    </section>
+
+
+    <!-- CREATE AND MANAGE TRIPS -->
+    <section class="content-grid">
+
+
+        <!-- CREATE TRIP FORM -->
+        <section class="panel form-panel">
+
+            <h2 id="form-heading">
+                Create a Trip
+            </h2>
+
+            <p class="muted">
+                Enter your travel details below.
+            </p>
+
+
+            <div id="status-message"
+                 class="status"
+                 role="status"
+                 aria-live="polite"
+                 hidden>
+            </div>
+
+
+            <form id="trip-form">
+
+                <input type="hidden" id="trip-id">
+
+
+                <label for="title">
+                    Trip title *
+                </label>
+
+                <input
+                    id="title"
+                    name="title"
+                    type="text"
+                    maxlength="150"
+                    placeholder="e.g. Goa Holiday"
+                    required
+                >
+
+
+                <label for="destination">
+                    Destination *
+                </label>
+
+                <input
+                    id="destination"
+                    name="destination"
+                    type="text"
+                    maxlength="150"
+                    placeholder="e.g. Goa, India"
+                    required
+                >
+
+
+                <div class="field-row">
+
+                    <div>
+                        <label for="startDate">
+                            Start date
+                        </label>
+
+                        <input
+                            id="startDate"
+                            name="startDate"
+                            type="date"
+                        >
+                    </div>
+
+                    <div>
+                        <label for="endDate">
+                            End date
+                        </label>
+
+                        <input
+                            id="endDate"
+                            name="endDate"
+                            type="date"
+                        >
+                    </div>
+
+                </div>
+
+
+                <label for="budget">
+                    Estimated budget (₹)
+                </label>
+
+                <input
+                    id="budget"
+                    name="budget"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="25000"
+                >
+
+
+                <label for="description">
+                    Description
+                </label>
+
+                <textarea
+                    id="description"
+                    name="description"
+                    maxlength="1000"
+                    rows="3"
+                    placeholder="Tell us about your trip..."
+                ></textarea>
+
+
+                <button
+                    type="submit"
+                    id="save-button"
+                    class="primary-btn">
+                    Create Trip
+                </button>
+
+
+                <button
+                    type="button"
+                    id="cancel-edit"
+                    class="secondary-btn"
+                    hidden>
+                    Cancel Edit
+                </button>
+
+            </form>
+
+        </section>
+
+
+        <!-- MY TRIPS -->
+        <section class="trips-section">
+
+            <div class="section-heading">
+
+                <div>
+                    <h2>My Trips</h2>
+
+                    <p class="muted">
+                        All your planned adventures.
+                    </p>
+                </div>
+
+
+                <button
+                    type="button"
+                    id="refresh-button"
+                    class="secondary-btn">
+                    ↻ Refresh
+                </button>
+
+            </div>
+
+
+            <div id="trip-list" class="trip-list">
+
+                <p class="empty-state">
+                    Loading trips...
+                </p>
+
+            </div>
+
+        </section>
+
+    </section>
+
+
+<section class="saved-itineraries-section">
+    <h2>📚 My Saved Itineraries</h2>
+
+    <p>All your saved AI travel plans.</p>
+
+    <div id="saved-itineraries-list">
+        <p>Loading saved itineraries...</p>
+    </div>
+</section>
+<!-- Edit Saved Itinerary Modal -->
+<div id="edit-itinerary-modal" class="edit-modal" hidden>
+
+    <div class="edit-modal-content">
+
+        <h2>✏️ Edit Saved Itinerary</h2>
+
+        <form id="edit-itinerary-form">
+
+            <input type="hidden" id="edit-itinerary-id">
+
+            <label for="edit-destination">Destination</label>
+            <input
+                type="text"
+                id="edit-destination"
+                required
+            >
+
+            <label for="edit-start-date">Start Date</label>
+            <input
+                type="date"
+                id="edit-start-date"
+                required
+            >
+
+            <label for="edit-end-date">End Date</label>
+            <input
+                type="date"
+                id="edit-end-date"
+                required
+            >
+
+            <label for="edit-budget">Budget (₹)</label>
+            <input
+                type="number"
+                id="edit-budget"
+                min="1"
+                step="0.01"
+                required
+            >
+
+            <div class="edit-modal-actions">
+
+                <button type="submit" id="update-itinerary-button">
+                    💾 Update Itinerary
+                </button>
+
+                <button type="button" id="cancel-edit-button">
+                    Cancel
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+</main>
+
+<!-- FOOTER -->
+<footer>
+    <p>
+        ✈ TripMate · Your travel plans, all in one place.
+    </p>
+</footer>
+
+
+</body>
+</html>

@@ -1,0 +1,103 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TripMate Registration Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 450px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+
+        input, button {
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px;
+            margin: 12px 0;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        #result {
+            overflow-wrap: anywhere;
+        }
+    </style>
+</head>
+<body>
+    <h2>TripMate Registration Test</h2>
+
+    <form id="register-form">
+        <input
+            id="fullName"
+            placeholder="Full name"
+            maxlength="100"
+            required
+        >
+
+        <input
+            id="email"
+            type="email"
+            placeholder="Email address"
+            maxlength="150"
+            required
+        >
+
+        <input
+            id="password"
+            type="password"
+            placeholder="Password (minimum 8 characters)"
+            minlength="8"
+            maxlength="72"
+            required
+        >
+
+        <button type="submit">Register</button>
+    </form>
+
+    <p id="result" role="status"></p>
+
+    <script>
+        document.getElementById("register-form")
+            .addEventListener("submit", async function (event) {
+                event.preventDefault();
+
+                const result = document.getElementById("result");
+                result.textContent = "Registering...";
+
+                const data = {
+                    fullName: document.getElementById("fullName").value,
+                    email: document.getElementById("email").value,
+                    password: document.getElementById("password").value
+                };
+
+                try {
+                    const response = await fetch("/api/auth/register", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(data)
+                    });
+
+                    const responseData = await response.json();
+
+                    result.textContent =
+                        "Status: " + response.status + " — " +
+                        (responseData.message ||
+                         JSON.stringify(responseData));
+
+                } catch (error) {
+                    result.textContent =
+                        "Request failed. Check that Spring Boot is running.";
+                }
+            });
+    </script>
+</body>
+</html>
